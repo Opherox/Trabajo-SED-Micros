@@ -36,14 +36,15 @@ void mountFileSystem(void)
 
 int scanMp3Music(void)
 {
-  	if (result = (f_opendir(&dir, "/")) == FR_OK) //abrimos el directorio raiz
+  	if ((result = f_opendir(&dir, "/")) == FR_OK) //abrimos el directorio raiz
   	{
   		int numf = 0; //para contar numero de archibos mp3
-  		while(f_readdir(&dir, &finfo) == FR_OK && finfo.fname[0] != 0 && numf < MAX_MUSIC) //mientras queden archivos por leer
+  		while((result = f_readdir(&dir, &finfo)) == FR_OK && finfo.fname[0] != 0 && numf < MAX_MUSIC) //mientras queden archivos por leer, aqui actualiza el archivo que lee
   		{
-  			if(!(finfo.fattrib & AM_DIR) && strstr(finfo.fname, ".mp3") != NULL) //si el archivo es un directorio y el nombre del archivo tiene una subcadena .mp3
+  			if(!(finfo.fattrib & AM_DIR) && strcasecmp(strrchr(finfo.fname, '.'), ".MP3") == 0) //si el archivo es un directorio y el nombre del archivo tiene una subcadena .mp3
   			{
   				mp3Files[numf] = (char*)malloc(strlen(finfo.fname)+1);	//guardamos el nombre del archivo en un vector de chars, en el elemento de numero actual encontrado
+  				strcpy(mp3Files[numf], finfo.fname);
   				numf++;	//aumentamos el numero de archivos mp3 encontrados
   				printf("Se han encontrado %d canciones.\n", numf);
   			}

@@ -96,7 +96,7 @@ void MX_USB_HOST_Process(void)
 {
   /* USB Host Background task */
   USBH_Process(&hUsbHostFS);
-  if(hUsbHostFS.gState == HOST_IDLE) //si vale HOST_IDLE o HOST_CLASS significa que se ha conectado con el USBHOST correcta,emte y esta listo para comunicarse con el USB
+  if(hUsbHostFS.gState == HOST_CLASS) //si vale HOST_IDLE o HOST_CLASS significa que se ha conectado con el USBHOST correcta,emte y esta listo para comunicarse con el USB
   {
   	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //si la conexion se ha establecido, se enciende la luz verde de la placa
   }

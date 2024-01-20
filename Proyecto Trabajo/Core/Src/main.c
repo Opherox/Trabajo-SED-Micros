@@ -120,7 +120,19 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-    mainFileSystem();
+    int USBReadyFlag = 0;
+    if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_12) == GPIO_PIN_SET)
+    {
+    	USBReadyFlag = 1;
+    }
+    else
+    {
+    	USBReadyFlag = 0;
+    }
+    if(USBReadyFlag == 1)
+    {
+    	mainFileSystem();
+    }
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
 
 
