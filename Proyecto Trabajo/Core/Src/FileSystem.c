@@ -11,29 +11,7 @@
 #include "ff.h"
 #include "usbh_core.h"
 #include "usbh_msc.h"
-
-FATFS fs;
-FILINFO finfo;
-#define MAX_MUSIC 30
-#define BUFFER_SIZE 51200 //50KB
-#define DELAY 500 //0,5s
-FRESULT result;
-const uint8_t oktext[] = "USB mounted !";
-const uint8_t etext[] = "USB not mounted !";
-static uint8_t isMounted = 0;
-static uint8_t isIndexed = 0;
-static uint8_t isConf = 0;
-static uint8_t buf1CanRead = 0;
-static uint8_t buf2CanRead = 0;
-static uint8_t buf1Playing = 0;
-static uint8_t buf2Playing = 0;
-static uint8_t foundSongs = 0;
-static uint8_t playing = 0;
-static uint8_t bytesLeidos = 0;
-int change = 0;
-DIR dir;
-char *mp3Files[MAX_MUSIC]; //matriz de chars para almacenar nombres de ficheros que son canciones
-char *buffer[1]; //bloque 1 y 2 para musica
+#include "FileSystem.h"
 
 void initFileSystem(void)
 {
