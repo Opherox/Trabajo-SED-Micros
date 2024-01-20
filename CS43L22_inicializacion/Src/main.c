@@ -50,6 +50,7 @@ uint8_t audio_addr_write = 0x94;
 uint16_t audio[1024];
 
 uint8_t estado[2];
+uint8_t recibir;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -66,6 +67,8 @@ static void MX_I2S3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 	void CS43L22_Init(){
+
+		 recibir=0;
 
 		 //POWER CONTROL 1
 		  estado[0]=0x02;
@@ -86,7 +89,7 @@ static void MX_I2S3_Init(void);
 		  estado[0]=0x06;
 		  // Como el bit 5 esta reservaso hay que conocer su estado
 		  HAL_I2C_Master_Transmit(&hi2c1,audio_addr_read,&estado[0],1,HAL_MAX_DELAY);
-		  HAL_I2C_Master_Transmit(&hi2c1,audio_addr_read,&estado[1],1,HAL_MAX_DELAY);
+		  HAL_I2C_Master_Receive(&hi2c1,audio_addr_read,&estado[1],1,HAL_MAX_DELAY);
 		  	  estado[1] &= (1 << 5);   // Pone los bit a 0 menos el bit reservado
 		  	  estado[1] &= ~(1 << 7);  // Modo esclavo
 		  	  estado[1] &= ~(1 << 6);  // Polaridad del reloj no invertida
@@ -100,7 +103,7 @@ static void MX_I2S3_Init(void);
 		  estado[0]=0x08;
 		  // Como hay bits reservados hay que conocer su estado
 		  HAL_I2C_Master_Transmit(&hi2c1,audio_addr_read,&estado[0],1,HAL_MAX_DELAY);
-		  HAL_I2C_Master_Transmit(&hi2c1,audio_addr_read,&estado[1],1,HAL_MAX_DELAY);
+		  HAL_I2C_Master_Receive(&hi2c1,audio_addr_read,&estado[1],1,HAL_MAX_DELAY);
 		  	  estado[1] &= 0xF0;     // Bit [7-4] reservados y el resto a 0
 		  	  estado[1] |= (1 << 0); // canal de entrada AIN1A
 		  HAL_I2C_Master_Transmit(&hi2c1,audio_addr_write,estado,2,HAL_MAX_DELAY);
@@ -110,7 +113,7 @@ static void MX_I2S3_Init(void);
 		   estado[0]=0x09;
 		   // Como hay bits reservados hay que conocer su estado
 		   HAL_I2C_Master_Transmit(&hi2c1,audio_addr_read,&estado[0],1,HAL_MAX_DELAY);
-		   HAL_I2C_Master_Transmit(&hi2c1,audio_addr_read,&estado[1],1,HAL_MAX_DELAY);
+		   HAL_I2C_Master_Receive(&hi2c1,audio_addr_read,&estado[1],1,HAL_MAX_DELAY);
 		   	  estado[1] &= 0xF0;     // Bit [7-4] reservados y el resto a 0
 		   	  estado[1] |= (1 << 0); // canal de entrada AIN1B
 		   HAL_I2C_Master_Transmit(&hi2c1,audio_addr_write,estado,2,HAL_MAX_DELAY);
