@@ -8,14 +8,14 @@
 #ifndef INC_FILESYSTEM_H_
 #define INC_FILESYSTEM_H_
 
-FATFS fs;
-FILINFO finfo;
+static FATFS fs;
+static FILINFO finfo;
 #define MAX_MUSIC 30 //maximo de 30 canciones
 #define BUFFER_SIZE 51200 //50KB
 #define DELAY 500 //0,5s
-FRESULT result;
-const uint8_t oktext[] = "USB mounted !";
-const uint8_t etext[] = "USB not mounted !";
+static FRESULT result;
+static const uint8_t oktext[] = "USB mounted !";
+static const uint8_t etext[] = "USB not mounted !";
 static uint8_t isMounted = 0;
 static uint8_t isIndexed = 0;
 static uint8_t isConf = 0;
@@ -26,10 +26,10 @@ static uint8_t buf2Playing = 0;
 static uint8_t foundSongs = 0;
 static uint8_t playing = 0;
 static uint8_t bytesLeidos = 0;
-int change = 0;
-DIR dir;
-char *mp3Files[MAX_MUSIC]; //matriz de chars para almacenar nombres de ficheros que son canciones
-char *buffer[1]; //bloque 1 y 2 para musica
+static int change = 0;
+static DIR dir;
+static char *mp3Files[MAX_MUSIC]; //matriz de chars para almacenar nombres de ficheros que son canciones
+static char *buffer[1]; //bloque 1 y 2 para musica
 
 void initFileSystem(void);
 void mountFileSystem(void);
