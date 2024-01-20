@@ -3,6 +3,9 @@
 # Prerequisites
 *.d
 
+# Metadata
+*.metadata
+
 # Object files
 *.o
 *.ko
