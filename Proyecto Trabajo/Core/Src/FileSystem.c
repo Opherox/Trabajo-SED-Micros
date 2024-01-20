@@ -15,25 +15,28 @@
 
 void initFileSystem(void)
 {
-	f_mount(&fs, "", 0); //montamos el sistema de archivos, 0:no forzar montaje
+	result = f_mount(&fs, "", 0); //montamos el sistema de archivos, 0:no forzar montaje
 }
 
 void mountFileSystem(void)
 {
-	if((result = f_mount(&fs, "", 0) == FR_OK) && isMounted == 0)
+	if(isMounted == 0)
 	{
-		printf("Sistema de ficheros montado con exito");
-		isMounted = 1;
-	}
-	else
-	{
-		Error_Handler();
+		if((result == FR_OK) && isMounted == 0)
+		{
+			printf("Sistema de ficheros montado con exito");
+			isMounted = 1;
+		}
+		else
+		{
+			Error_Handler();
+		}
 	}
 }
 
 int scanMp3Music(void)
 {
-  	if (f_opendir(&dir, "/") == FR_OK) //abrimos el directorio raiz
+  	if (result = (f_opendir(&dir, "/")) == FR_OK) //abrimos el directorio raiz
   	{
   		int numf = 0; //para contar numero de archibos mp3
   		while(f_readdir(&dir, &finfo) == FR_OK && finfo.fname[0] != 0 && numf < MAX_MUSIC) //mientras queden archivos por leer
