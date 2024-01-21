@@ -78,7 +78,6 @@ void indexFiles(void)
 
 int configMusicRegisters(char *b[], int i, int size) //vector de buffers, el numero de buffers que queremos hacer como argumento y su tamaño
 {
-	/* TODO posibles dudas de funcionamiento correcto */
 	if(isConf == 0)
 	{
 		isConf = 1;
@@ -169,16 +168,17 @@ void updatePingPongBuffers()
 
 int sendMusicBuffer(char* buff)
 {
-	return 1;
-	/*int res = 0;
+	// TODO Esto no funca, apañarlo
+	//return 1;
+	int res = HAL_OK;
 	if((res = HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t*)buff, BUFFER_SIZE)) == HAL_OK)
 	{
-		return 1;
+		return 1;	//si la transmision se ha efectuado con exito
 	}
 	else
 	{
-		return 0;
-	}*/
+		return 0; 	//si ha habido error en la transmision o esta ocupado
+	}
 }
 
 void selectMusicBuffer()
@@ -227,6 +227,7 @@ void changeSong(uint8_t signal)
 			bytesLeidos = 0;
 			songPlaying = (char*)malloc(sizeof(mp3Files[playing]));
 			strcpy(songPlaying, mp3Files[playing]);
+			buf1CanRead = 1;
 		}
 	}
 }

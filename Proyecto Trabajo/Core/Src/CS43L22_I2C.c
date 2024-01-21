@@ -11,13 +11,15 @@
 static uint8_t audio_addr_read = 0x95;
 static uint8_t audio_addr_write = 0x94;
 static I2C_HandleTypeDef hi2c1;
+extern I2S_HandleTypeDef hi2s3;
 
 uint8_t estado[2];
 
 void CS43L22_Init(I2C_HandleTypeDef i2c){
 
 	hi2c1 = i2c;
-
+	__HAL_UNLOCK(&hi2s3);
+	__HAL_I2S_ENABLE(&hi2s3);
 	//POWER CONTROL 1
 			  estado[0]=0x02;
 			  estado[1]=0x01; //Power down 0x01 / 0x9E para encender
