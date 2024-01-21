@@ -82,7 +82,8 @@ void MX_USB_HOST_Process(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+
+/*void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   // Leer el estado actual del botón
   if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET)
@@ -92,6 +93,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   		HAL_TIM_Base_Stop_IT(&htim1);
   }
 }
+*/
+
 /* USER CODE END 0 */
 
 /**

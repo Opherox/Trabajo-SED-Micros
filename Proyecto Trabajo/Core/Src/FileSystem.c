@@ -89,7 +89,7 @@ int configMusicRegisters(char *b[], int i, int size) //vector de buffers, el num
 			{
 				for(int z = 0; z < j; z++)
 				{
-					free(buffer[z]); //liberamos la memoria de los buffers por el error al reservar memoria
+					free(b[z]); //liberamos la memoria de los buffers por el error al reservar memoria
 				}
 				printf("No se ha podido reservar memoria para el Buffer %d",j);
 				isConf = 0;
@@ -105,27 +105,32 @@ int configMusicRegisters(char *b[], int i, int size) //vector de buffers, el num
   	return 1;
 }
 
-int readFile(const char *filename, char *buffer, int size, uint8_t bytesRead)
+int readFile(const char *filename, char *buffer, int size, uint32_t *bytesRead)
 {
-	FIL songFile;
-	result = f_open(&songFile, filename, FA_READ); //abrimos el archivo en lectura
-	UINT realBytesRead = 0;
-	if(result != FR_OK)
+	if(filename != NULL)
 	{
-		printf("Error al abrir el archivo");
-		return 1;
-	}
-	f_lseek(&songFile, bytesRead); //nos ponemos al principio del archivo + los bytes leidos anteriormente
-	if((result = f_read(&songFile, buffer, size, &realBytesRead)) == FR_OK) //si la lectura se ha podido realizar
-	{
-		printf("Lectura de fichero realizada con exito");
-		bytesRead += realBytesRead; //los bytes leidos son los que ya se habian leido mas los que se ha conseguido leer en esta ocasion
-		return 0;
-	}
-	else
-	{
-		printf("Error al leer el archivo");
-		return 1;
+		FIL songFile;
+		result = f_open(&songFile, filename, FA_READ); //abrimos el archivo en lectura
+		UINT realBytesRead = 0;
+		if(result != FR_OK)
+		{
+			printf("Error al abrir el archivo");
+			return 1;
+		}
+		f_lseek(&songFile, *bytesRead); //nos ponemos al principio del archivo + los bytes leidos anteriormente
+		if((result = f_read(&songFile, buffer, size, &realBytesRead)) == FR_OK) //si la lectura se ha podido realizar
+		{
+			printf("Lectura de fichero realizada con exito");
+			f_close(&songFile);  // Cerramos el archivo después de leerlo
+			*bytesRead += realBytesRead; //los bytes leidos son los que ya se habian leido mas los que se ha conseguido leer en esta ocasion
+			return 1;
+		}
+		else
+		{
+			printf("Error al leer el archivo");
+			f_close(&songFile);  // Cerramos el archivo en caso de error
+			return 0;
+		}
 	}
 }
 
@@ -135,7 +140,7 @@ void updatePingPongBuffers()
 	{
 		if(buf1CanRead != 0)
 		{
-			if(readFile(mp3Files[playing], buffer[0], BUFFER_SIZE, bytesLeidos) != 1)
+			if(readFile(mp3Files[playing], buffer[0], BUFFER_SIZE, &bytesLeidos) != 1)
 			{
 				printf("Buffer 1 actualizado con exito");
 				buf1CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
@@ -146,9 +151,9 @@ void updatePingPongBuffers()
 				printf("Error al actualizar el buffer 1");
 			}
 		}
-		if(buf2CanRead !=0)
+		else if(buf2CanRead !=0)
 		{
-			if(readFile(mp3Files[playing], buffer[1], BUFFER_SIZE, bytesLeidos) != 1)
+			if(readFile(mp3Files[playing], buffer[1], BUFFER_SIZE, &bytesLeidos) != 1)
 					{
 						printf("Buffer 2 actualizado con exito");
 						buf2CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
@@ -164,35 +169,42 @@ void updatePingPongBuffers()
 
 int sendMusicBuffer(char* buff)
 {
-	if(HAL_I2S_Transmit_DMA(&hi2s3, buff, BUFFER_SIZE) == HAL_OK)
+	return 1;
+	/*int res = 0;
+	if((res = HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t*)buff, BUFFER_SIZE)) == HAL_OK)
 	{
 		return 1;
 	}
 	else
 	{
 		return 0;
-	}
+	}*/
 }
 
 void selectMusicBuffer()
 {
 	if(isConf == 1 && songPlaying != NULL)
 	{
-		buf1Playing = 1;
+		int flag = 1;
 		if(buf1Playing == 1)
 		{
 			if(sendMusicBuffer(buffer[0]) == 1)
 			{
 				buf1CanRead = 1;	//una vez termina de mandarlo, pasa a leer
 				buf1Playing = 0;	//y ya no transmite
+				buf2CanRead = 0;	//el buffer contrario ya no lee
+				buf2Playing = 1;	//el buffer contrario pasa a enviar sonido
+				flag = 0;			//flag para no verificar el if siguiente sin pasar un ciclo primero
 			}
 		}
-		if(buf2Playing == 1)
+		if(buf2Playing == 1 && flag == 1)
 		{
 				if(sendMusicBuffer(buffer[1]) == 1)
 				{
 					buf2CanRead = 1;	//una vez termina de mandarlo, pasa a leer
 					buf2Playing = 0;	//y ya no transmite
+					buf1CanRead = 0;	//el buffer contrario ya no lee
+					buf1Playing = 1;	//el buffer contrario pasa a enviar sonido
 				}
 		}
 	}
@@ -212,6 +224,7 @@ void changeSong(uint8_t signal)
 			{
 				playing = 0;
 			}
+			bytesLeidos = 0;
 			songPlaying = (char*)malloc(sizeof(mp3Files[playing]));
 			strcpy(songPlaying, mp3Files[playing]);
 		}
