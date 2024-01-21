@@ -139,6 +139,7 @@ void updatePingPongBuffers()
 			{
 				printf("Buffer 1 actualizado con exito");
 				buf1CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
+				buf1Playing = 1;
 			}
 			else
 			{
@@ -151,6 +152,7 @@ void updatePingPongBuffers()
 					{
 						printf("Buffer 2 actualizado con exito");
 						buf2CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
+						buf2Playing = 1;
 					}
 					else
 					{
@@ -162,17 +164,24 @@ void updatePingPongBuffers()
 
 int sendMusicBuffer(char* buff)
 {
-	/* TODO ver la comunicacion por donde mandarlo */
-	return 1;
+	if(HAL_I2S_Transmit_DMA(&hi2s3, buff, BUFFER_SIZE) == HAL_OK)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void selectMusicBuffer()
 {
 	if(isConf == 1 && songPlaying != NULL)
 	{
+		buf1Playing = 1;
 		if(buf1Playing == 1)
 		{
-			if(sendMusicBuffer(buffer[0]) == 0)
+			if(sendMusicBuffer(buffer[0]) == 1)
 			{
 				buf1CanRead = 1;	//una vez termina de mandarlo, pasa a leer
 				buf1Playing = 0;	//y ya no transmite
@@ -180,7 +189,7 @@ void selectMusicBuffer()
 		}
 		if(buf2Playing == 1)
 		{
-				if(sendMusicBuffer(buffer[1]) == 0)
+				if(sendMusicBuffer(buffer[1]) == 1)
 				{
 					buf2CanRead = 1;	//una vez termina de mandarlo, pasa a leer
 					buf2Playing = 0;	//y ya no transmite

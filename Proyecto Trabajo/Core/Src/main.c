@@ -20,7 +20,7 @@
 #include "main.h"
 #include "fatfs.h"
 #include "usb_host.h"
-
+#include "CS43L22_I2C.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -51,6 +51,7 @@ SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
 
+DMA_HandleTypeDef hdma_spi3_tx;
 /* USER CODE BEGIN PV */
 
 uint8_t buttonSong = 0;
@@ -132,6 +133,9 @@ int main(void)
   MX_FATFS_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  CS43L22_Init(hi2c1);
+  CS43L22_ON();
 
   /* USER CODE END 2 */
 
