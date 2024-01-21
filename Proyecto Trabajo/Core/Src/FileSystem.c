@@ -82,7 +82,7 @@ int configMusicRegisters(char *b[], int i, int size) //vector de buffers, el num
 	if(isConf == 0)
 	{
 		isConf = 1;
-		for(int j = 0; j < i-1; j++)
+		for(int j = 0; j < i; j++)
 		{
 			b[j] = (char*)malloc(size);
 			if (b[j] == NULL)
@@ -101,6 +101,7 @@ int configMusicRegisters(char *b[], int i, int size) //vector de buffers, el num
 			}
 		}
   	}
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET); //si se han configurado los dos buffers bien encender luz roja
   	return 1;
 }
 
@@ -130,29 +131,32 @@ int readFile(const char *filename, char *buffer, int size, uint8_t bytesRead)
 
 void updatePingPongBuffers()
 {
-	if(buf1CanRead != 0)
+	if(isConf == 1)
 	{
-		if(readFile(mp3Files[playing], buffer[0], BUFFER_SIZE, bytesLeidos) != 1)
+		if(buf1CanRead != 0)
 		{
-			printf("Buffer 1 actualizado con exito");
-			buf1CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
+			if(readFile(mp3Files[playing], buffer[0], BUFFER_SIZE, bytesLeidos) != 1)
+			{
+				printf("Buffer 1 actualizado con exito");
+				buf1CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
+			}
+			else
+			{
+				printf("Error al actualizar el buffer 1");
+			}
 		}
-		else
+		if(buf2CanRead !=0)
 		{
-			printf("Error al actualizar el buffer 1");
+			if(readFile(mp3Files[playing], buffer[1], BUFFER_SIZE, bytesLeidos) != 1)
+					{
+						printf("Buffer 2 actualizado con exito");
+						buf2CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
+					}
+					else
+					{
+						printf("Error al actualizar el buffer 2");
+					}
 		}
-	}
-	if(buf2CanRead !=0)
-	{
-		if(readFile(mp3Files[playing], buffer[1], BUFFER_SIZE, bytesLeidos) != 1)
-				{
-					printf("Buffer 2 actualizado con exito");
-					buf2CanRead = 0;	//una vez actualizado no puede leer hasta terminar de reproducirse
-				}
-				else
-				{
-					printf("Error al actualizar el buffer 2");
-				}
 	}
 }
 
@@ -164,31 +168,53 @@ int sendMusicBuffer(char* buff)
 
 void selectMusicBuffer()
 {
-
-	if(buf1Playing == 1)
+	if(isConf == 1 && songPlaying != NULL)
 	{
-		if(sendMusicBuffer(buffer[0]) == 0)
+		if(buf1Playing == 1)
 		{
-			buf1CanRead = 1;	//una vez termina de mandarlo, pasa a leer
-			buf1Playing = 0;	//y ya no transmite
-		}
-	}
-	if(buf2Playing == 1)
-		{
-			if(sendMusicBuffer(buffer[1]) == 0)
+			if(sendMusicBuffer(buffer[0]) == 0)
 			{
-				buf2CanRead = 1;	//una vez termina de mandarlo, pasa a leer
-				buf2Playing = 0;	//y ya no transmite
+				buf1CanRead = 1;	//una vez termina de mandarlo, pasa a leer
+				buf1Playing = 0;	//y ya no transmite
 			}
 		}
+		if(buf2Playing == 1)
+		{
+				if(sendMusicBuffer(buffer[1]) == 0)
+				{
+					buf2CanRead = 1;	//una vez termina de mandarlo, pasa a leer
+					buf2Playing = 0;	//y ya no transmite
+				}
+		}
+	}
 }
 
-void mainFileSystem(void)
+void changeSong(uint8_t signal)
+{
+	if(isConf == 1)
+	{
+		if(signal == 1)
+		{
+			if(playing < foundSongs-1)
+			{
+				playing++;
+			}
+			else
+			{
+				playing = 0;
+			}
+			songPlaying = (char*)malloc(sizeof(mp3Files[playing]));
+			strcpy(songPlaying, mp3Files[playing]);
+		}
+	}
+}
+void mainFileSystem(uint8_t buttonSong)
 {
 	initFileSystem();
 	mountFileSystem();
 	indexFiles();
-	configMusicRegisters(buffer, 2, BUFFER_SIZE);
+	configMusicRegisters(buffer, NUM_BUFFERS, BUFFER_SIZE);
+	changeSong(buttonSong);
 	updatePingPongBuffers();
 	selectMusicBuffer();
 }
