@@ -195,7 +195,7 @@ void changeSong(uint8_t signal)
 	{
 		if(signal == 1)
 		{
-			if(playing < foundSongs-1)
+			if(playing < foundSongs)
 			{
 				playing++;
 			}

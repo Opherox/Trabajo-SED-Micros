@@ -54,7 +54,14 @@ TIM_HandleTypeDef htim1;
 /* USER CODE BEGIN PV */
 
 uint8_t buttonSong = 0;
-
+typedef enum
+{
+	BSP, //boton sin pulsar
+	BP,	//boton pulsado
+	BS	//boton soltado
+}ButtonState;
+ButtonState buttonState = BSP;
+static uint32_t lastButtonPressTime = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -136,6 +143,16 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+    buttonSong = 0;
+    uint32_t currentTime = HAL_GetTick();
+    if(currentTime-lastButtonPressTime > 500)
+    {
+    	 if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+    	    {
+    	    	lastButtonPressTime = currentTime;
+    	    	buttonSong = 1;
+    	    }
+    }
 
     int USBReadyFlag = 0;
     if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_12) == GPIO_PIN_SET)
@@ -493,19 +510,29 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+/*void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if(GPIO_Pin == GPIO_PIN_0)
 	{
+		GPIO_PinState buttonStateNow = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
 		HAL_TIM_Base_Start_IT(&htim1);
-		buttonSong = 1;
+		if(buttonStateNow == GPIO_PIN_SET && buttonState == BSP)
+		{
+			buttonState = BP;
+			buttonSong = 1;
+		}
+		if(buttonStateNow == GPIO_PIN_RESET && buttonState == BP)
+		{
+			buttonState = BS;
+			buttonSong = 0;
+		}
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
 	}
 	else
 	{
 		__NOP();
 	}
-}
+}*/
 /* USER CODE END 4 */
 
 /**
