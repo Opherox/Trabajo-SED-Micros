@@ -137,8 +137,11 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_I2S_Init(&hi2s3);
+  HAL_DMA_Init(&hdma_spi3_tx);
   CS43L22_Init(hi2c1);
   CS43L22_ON();
+  __HAL_LINKDMA(&hi2s3, hdmatx, hdma_spi3_tx);
 
   /* USER CODE END 2 */
 
