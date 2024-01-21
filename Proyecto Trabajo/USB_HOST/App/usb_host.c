@@ -65,7 +65,7 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
   * Init USB host library, add supported class and start the library
   * @retval None
   */
-void MX_USB_HOST_Init(void)
+void MX_USB_HOST_Init(void) //inicia el Host USB
 {
   /* USER CODE BEGIN USB_HOST_Init_PreTreatment */
 
@@ -96,6 +96,10 @@ void MX_USB_HOST_Process(void)
 {
   /* USB Host Background task */
   USBH_Process(&hUsbHostFS);
+  if(hUsbHostFS.gState == HOST_CLASS) //si vale HOST_IDLE o HOST_CLASS significa que se ha conectado con el USBHOST correcta,emte y esta listo para comunicarse con el USB
+  {
+  	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //si la conexion se ha establecido, se enciende la luz verde de la placa
+  }
 }
 /*
  * user callback definition
@@ -136,4 +140,3 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 /**
   * @}
   */
-
