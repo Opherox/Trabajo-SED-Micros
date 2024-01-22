@@ -170,8 +170,7 @@ int sendMusicBuffer(char* buff)
 {
 	// TODO Esto no funca, apañarlo
 	return 1;
-	/*int res = HAL_OK;
-	if((res = HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t*)buff, BUFFER_SIZE)) == HAL_OK)
+	/*if((res = HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t*)buff, BUFFER_SIZE)) == HAL_OK)
 	{
 		return 1;	//si la transmision se ha efectuado con exito
 	}
