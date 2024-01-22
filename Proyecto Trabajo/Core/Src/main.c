@@ -165,7 +165,7 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-    volume = changeVolume(hadc1, hi2c1);
+    volume = changeVolume(hadc1, hi2c3);
 
     buttonSong = 0;
     uint32_t currentTime = HAL_GetTick();
