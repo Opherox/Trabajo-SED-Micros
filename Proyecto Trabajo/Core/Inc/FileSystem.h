@@ -36,7 +36,7 @@ static uint32_t bytesLeidos = 0;
 static DIR dir;
 static char *mp3Files[MAX_MUSIC]; //matriz de chars para almacenar nombres de ficheros que son canciones
 static char *buffer[NUM_BUFFERS]; //bloque 1 y 2 para musica
-static char *songPlaying = NULL;
+extern char *songPlaying;
 extern I2S_HandleTypeDef hi2s3;
 
 void initFileSystem(void);

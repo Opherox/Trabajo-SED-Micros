@@ -13,6 +13,8 @@
 #include "usbh_msc.h"
 #include "FileSystem.h"
 
+char *songPlaying = NULL;
+
 void initFileSystem(void)
 {
 	result = f_mount(&fs, "", 0); //montamos el sistema de archivos, 0:no forzar montaje
