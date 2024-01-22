@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "FileSystem.h"
 #include "CS43L22_I2C.h"
 #include "volume.h"
 /* USER CODE END Includes */

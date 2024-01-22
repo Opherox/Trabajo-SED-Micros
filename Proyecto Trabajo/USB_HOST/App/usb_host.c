@@ -100,6 +100,10 @@ void MX_USB_HOST_Process(void)
   {
   	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //si la conexion se ha establecido, se enciende la luz verde de la placa
   }
+  else
+  {
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+  }
 }
 /*
  * user callback definition
@@ -127,8 +131,6 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   default:
   break;
   }
-
-  /* TODO : Aqui va el codigo de buscar ficheros en el pen */
 
   /* USER CODE END CALL_BACK_1 */
 }
