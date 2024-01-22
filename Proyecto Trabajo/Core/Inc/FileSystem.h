@@ -9,6 +9,7 @@
 #define INC_FILESYSTEM_H_
 
 #include "stm32f4xx_hal.h"
+#include "ff.h"
 
 static FATFS fs;
 static FILINFO finfo;
