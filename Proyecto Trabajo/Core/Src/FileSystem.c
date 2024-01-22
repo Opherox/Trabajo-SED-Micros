@@ -169,7 +169,8 @@ void updatePingPongBuffers()
 int sendMusicBuffer(char* buff)
 {
 	// TODO Esto no funca, apañarlo
-	//return 1;
+	return 1;
+	/*
 	int res = HAL_OK;
 	if((res = HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t*)buff, BUFFER_SIZE)) == HAL_OK)
 	{
@@ -178,7 +179,7 @@ int sendMusicBuffer(char* buff)
 	else
 	{
 		return 0; 	//si ha habido error en la transmision o esta ocupado
-	}
+	}*/
 }
 
 void selectMusicBuffer()
