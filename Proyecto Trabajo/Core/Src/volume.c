@@ -18,6 +18,9 @@ void oled_Init()
 
 uint16_t changeVolume(ADC_HandleTypeDef *hadc1, I2C_HandleTypeDef *hi2c1)
 {
+    /* TODO: eliminar macro cuando se use hi2c1 */
+    UNUSED(hi2c1);
+
     uint16_t adcval;
 	uint16_t value;
 	uint16_t volume;
