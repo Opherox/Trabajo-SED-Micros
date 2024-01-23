@@ -16,9 +16,9 @@ void oled_Init()
 	SSD1306_Init();
 }
 
-uint16_t changeVolume(ADC_HandleTypeDef hadc1, I2C_HandleTypeDef hi2c1)
+uint16_t changeVolume(ADC_HandleTypeDef *hadc1, I2C_HandleTypeDef *hi2c1)
 {
-	uint16_t adcval;
+    uint16_t adcval;
 	uint16_t value;
 	uint16_t volume;
 	const uint16_t adcval_MAX = 4095;
@@ -31,11 +31,11 @@ uint16_t changeVolume(ADC_HandleTypeDef hadc1, I2C_HandleTypeDef hi2c1)
 	char *song = "No hay cancion";
 	strncpy(song, songPlaying, strlen(songPlaying)+1);
 	//ADC
-	HAL_ADC_Start(&hadc1);
-	if(HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY)== HAL_OK){
-		adcval = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Start(hadc1);
+	if(HAL_ADC_PollForConversion(hadc1, HAL_MAX_DELAY)== HAL_OK){
+		adcval = HAL_ADC_GetValue(hadc1);
 	}
-	HAL_ADC_Stop(&hadc1);
+	HAL_ADC_Stop(hadc1);
 
 	value = (uint16_t)((adcval * rectangle_width)/adcval_MAX);	//From 0 to 118
 	volume = (uint16_t)((adcval * 100)/adcval_MAX);				//From 0 to 100

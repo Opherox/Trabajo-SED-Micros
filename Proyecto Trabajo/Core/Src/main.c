@@ -186,7 +186,7 @@ int main(void)
     }
     if(USBReadyFlag == 1)
     {
-    	volume = changeVolume(hadc1, hi2c1);
+    	volume = changeVolume(&hadc1, &hi2c1);
     	mainFileSystem(buttonSong); //como unica entrada tiene el boton o lo que se use para cambiar la cancion
     }
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
