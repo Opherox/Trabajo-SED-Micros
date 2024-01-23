@@ -58,14 +58,15 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
  * -- Insert your external function declaration here --
  */
 /* USER CODE BEGIN 1 */
-
+extern void usbMediaConnectedCallback(void);     /* NOTE: Called when drive connected. To write in app code */
+extern void usbMediaDisconnectedCallback(void);  /* NOTE: Called when drive disconnected. To write in app code */
 /* USER CODE END 1 */
 
 /**
   * Init USB host library, add supported class and start the library
   * @retval None
   */
-void MX_USB_HOST_Init(void) //inicia el Host USB
+void MX_USB_HOST_Init(void)
 {
   /* USER CODE BEGIN USB_HOST_Init_PreTreatment */
 
@@ -96,14 +97,6 @@ void MX_USB_HOST_Process(void)
 {
   /* USB Host Background task */
   USBH_Process(&hUsbHostFS);
-  if(hUsbHostFS.gState == HOST_CLASS) //si vale HOST_IDLE o HOST_CLASS significa que se ha conectado con el USBHOST correcta,emte y esta listo para comunicarse con el USB
-  {
-  	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET); //si la conexion se ha establecido, se enciende la luz verde de la placa
-  }
-  else
-  {
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-  }
 }
 /*
  * user callback definition
@@ -118,10 +111,12 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_DISCONNECTION:
   Appli_state = APPLICATION_DISCONNECT;
+  usbMediaDisconnectedCallback();
   break;
 
   case HOST_USER_CLASS_ACTIVE:
   Appli_state = APPLICATION_READY;
+  usbMediaConnectedCallback();
   break;
 
   case HOST_USER_CONNECTION:
@@ -142,3 +137,4 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 /**
   * @}
   */
+

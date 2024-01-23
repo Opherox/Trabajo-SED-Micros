@@ -23,14 +23,28 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "FileSystem.h"
-#include "CS43L22_I2C.h"
-#include "volume.h"
+#include <FileSystem.h>
+#include <player.h>
+#include <volume.h>
+
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum
+{
+    BSP, //boton sin pulsar
+    BP, //boton pulsado
+    BS  //boton soltado
+} ButtonState;
 
+typedef enum
+{
+  APPST_NOMEDIA,  /* No pendrive connected or can't read or no MP3 */
+  APPST_PAUSED,   /* Pendrive connected and no error */
+  APPST_PLAYING   /* Playing song and no error */
+} AppState;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -57,17 +71,13 @@ SPI_HandleTypeDef hspi1;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
+static volatile uint32_t lastButtonPressTime;
+static volatile bool usrBtnPressed;
 
-uint16_t volume;
-uint8_t buttonSong = 0;
-typedef enum
-{
-	BSP, //boton sin pulsar
-	BP,	//boton pulsado
-	BS	//boton soltado
-}ButtonState;
-ButtonState buttonState = BSP;
-static uint32_t lastButtonPressTime = 0;
+static AppState appState;
+
+static uint16_t volume;
+static ButtonState buttonState = BSP;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,24 +94,82 @@ static void MX_ADC1_Init(void);
 void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
-
+void APP_launchNextMP3(bool restart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-/*void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  // Leer el estado actual del botón
-  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET)
+  if (GPIO_Pin != USER_BTN_Pin)
+    return;  /* Wrong pin */
+
+  uint32_t currentTime = HAL_GetTick();
+  if (currentTime >= lastButtonPressTime + 500)
   {
-  		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
-  		buttonSong = 0;
-  		HAL_TIM_Base_Stop_IT(&htim1);
+    lastButtonPressTime = currentTime;
+    usrBtnPressed = 1;
   }
 }
-*/
 
+/*
+ * Called from usb_host.c:119 when pendrive connected & ready
+ */
+void usbMediaConnectedCallback(void)
+{
+  FS_mount();
+  if (FS_getStatus() == FR_OK)
+  {
+    appState = APPST_PAUSED;
+    HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+    /* TODO: print status changed message to OLED */
+  }
+  else
+  {
+    appState = APPST_NOMEDIA;
+    HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
+    /* TODO: print status changed message to OLED */
+  }
+}
+
+/*
+ * Called from usb_host.c:114 when pendrive disconnected
+ */
+void usbMediaDisconnectedCallback(void)
+{
+  appState = APPST_NOMEDIA;
+  PLAYER_stop();
+  FS_unmount();
+  HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
+  /* TODO: print status changed message to OLED */
+}
+
+/*
+ * Called from player.c:59 when song finished (no more data or error) & file closed
+ */
+void playerFinishedCallback(void)
+{
+  if (appState != APPST_PLAYING)
+    Error_Handler();
+
+  APP_launchNextMP3(false);
+}
+
+void APP_launchNextMP3(bool restart)
+{
+  const FILINFO *info = FS_nextMP3(restart);
+  if (!info)
+  {
+    appState = APPST_NOMEDIA;
+    HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
+    return;
+  }
+
+  /* TODO: print song info to OLED */
+  PLAYER_play(info->fname);
+}
 /* USER CODE END 0 */
 
 /**
@@ -120,7 +188,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  usrBtnPressed = false;
+  lastButtonPressTime = HAL_GetTick();
+  appState = APPST_NOMEDIA;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -145,14 +215,8 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-
-  HAL_I2S_Init(&hi2s3);
-  HAL_DMA_Init(&hdma_spi3_tx);
-  CS43L22_Init(hi2c1);
-  CS43L22_ON();
-  __HAL_LINKDMA(&hi2s3, hdmatx, hdma_spi3_tx);
+  PLAYER_init(&hi2c1, &hi2s3);
   oled_Init();
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -163,35 +227,27 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-
-    buttonSong = 0;
-    uint32_t currentTime = HAL_GetTick();
-    if(currentTime-lastButtonPressTime > 500)
+    if (usrBtnPressed)
     {
-    	 if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
-    	    {
-    	    	lastButtonPressTime = currentTime;
-    	    	buttonSong = 1;
-    	    }
-    }
+      usrBtnPressed = false;
 
-    int USBReadyFlag = 0;
-    if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_12) == GPIO_PIN_SET)
-    {
-    	USBReadyFlag = 1;
-    }
-    else
-    {
-    	USBReadyFlag = 0;
-    }
-    if(USBReadyFlag == 1)
-    {
-    	volume = changeVolume(&hadc1, &hi2c1);
-    	mainFileSystem(buttonSong); //como unica entrada tiene el boton o lo que se use para cambiar la cancion
-    }
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+      switch (appState)
+      {
+        case APPST_NOMEDIA:
+          break;
 
+        case APPST_PAUSED:
+          APP_launchNextMP3(true);
+          break;
 
+        case APPST_PLAYING:
+          APP_launchNextMP3(false);
+          break;
+
+        default:
+          Error_Handler();
+      }
+    }
   }
   /* USER CODE END 3 */
 }
@@ -570,11 +626,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(OTG_FS_PowerSwitchOn_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pin : USER_BTN_Pin */
+  GPIO_InitStruct.Pin = USER_BTN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(USER_BTN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD4_Pin LD3_Pin LD5_Pin LD6_Pin
                            Audio_RST_Pin */
