@@ -11,6 +11,6 @@
 
 void oled_Init();
 //extern char *songPlaying;
-uint16_t changeVolume(ADC_HandleTypeDef hadc1, I2C_HandleTypeDef hi2c1);
+uint16_t changeVolume(ADC_HandleTypeDef *hadc1, I2C_HandleTypeDef *hi2c1);
 
 #endif /* INC_VOLUME_H_ */

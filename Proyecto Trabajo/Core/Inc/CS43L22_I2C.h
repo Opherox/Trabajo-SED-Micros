@@ -10,7 +10,7 @@
 
 #include "stm32f4xx_hal.h"
 
-void CS43L22_Init(I2C_HandleTypeDef i2c);
+void CS43L22_Init(I2C_HandleTypeDef *i2c);
 void CS43L22_ON();
 void CS43L22_OFF();
 
