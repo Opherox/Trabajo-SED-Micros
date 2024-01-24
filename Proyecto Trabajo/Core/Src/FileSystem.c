@@ -8,12 +8,10 @@
 #include <FileSystem.h>
 #include <string.h>
 
-char *songPlaying = NULL;
 static FATFS FS_fs;
 static DIR FS_dir;
 static FILINFO FS_info;
 static FRESULT FS_status = FR_OK;
-
 
 FRESULT FS_getStatus(void)
 {
