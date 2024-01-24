@@ -8,23 +8,33 @@
 #include <player.h>
 
 #include <CS43L22_I2C.h>
+#include <spiritMP3Dec.h>
 
-#define PLAYER_BUF_SIZE (4096)
+#define PLAYER_MP3_GRANULE_SZ       (576)
+#define PLAYER_BUF_SIZE_IN_SAMPLES  (4 * PLAYER_MP3_GRANULE_SZ)
+#define PLAYER_BUF_CHANNELS         (2)
 
 extern void playerFinishedCallback(void);  /* Called when stop playing & file closed. To write in app code */
 
+unsigned int MP3ReadCallback(void *pMP3CompressedData, unsigned int nMP3DataSizeInChars, void *token);
+
 static I2S_HandleTypeDef *PLAYER_hi2s;
 
-FIL PLAYER_songFile;
+static FIL PLAYER_songFile;
+
 static int PLAYER_nxtbuf_idx;
-static uint16_t PLAYER_buf[2][PLAYER_BUF_SIZE];
+static int16_t PLAYER_buf[2][PLAYER_BUF_CHANNELS * PLAYER_BUF_SIZE_IN_SAMPLES];
 static uint16_t PLAYER_buf_len[2];
+
+static TSpiritMP3Decoder PLAYER_mp3Decoder;
+
 static bool PLAYER_playing = false;
 
 void PLAYER_init(I2C_HandleTypeDef *hi2c, I2S_HandleTypeDef *hi2s)
 {
   PLAYER_hi2s = hi2s;
   PLAYER_nxtbuf_idx = 0;
+
   CS43L22_Init(hi2c);
 }
 
@@ -46,6 +56,9 @@ bool PLAYER_play(const char *songFPath)
   PLAYER_playing = true;
   PLAYER_nxtbuf_idx = 0;
 
+
+  SpiritMP3DecoderInit(&PLAYER_mp3Decoder, MP3ReadCallback, NULL, &PLAYER_songFile);
+
   HAL_I2S_TxHalfCpltCallback(PLAYER_hi2s);  /* Force first data load */
   HAL_I2S_TxCpltCallback(PLAYER_hi2s);      /* Force first transfer to CODEC */
 
@@ -60,7 +73,7 @@ void PLAYER_stop()
   HAL_I2S_DMAStop(PLAYER_hi2s);  /* Terminate pending transfer (if any) */
   f_close(&PLAYER_songFile);     /* Close open file */
   PLAYER_playing = false;
-  playerFinishedCallback();        /* Notify app */
+  playerFinishedCallback();      /* Notify app */
 
   CS43L22_OFF();
 }
@@ -71,6 +84,17 @@ void PLAYER_setVolume(unsigned vol)
 }
 
 /*
+ *  MP3 decoder file reading callback
+ */
+unsigned int MP3ReadCallback(void *pMP3CompressedData, unsigned int nMP3DataSizeInChars, void *token)
+{
+  UINT rxBytes;
+  FRESULT res = f_read((FIL *)token, pMP3CompressedData, nMP3DataSizeInChars, &rxBytes);
+
+  return res == FR_OK ? rxBytes : 0;
+}
+
+/*
  *  Refill next buffer before current run out of data
  */
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
@@ -78,15 +102,13 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
   if (hi2s != PLAYER_hi2s)
     Error_Handler();
 
-  UINT rxBytes;
-  FRESULT res = f_read(&PLAYER_songFile, PLAYER_buf[PLAYER_nxtbuf_idx], PLAYER_BUF_SIZE << 1, &rxBytes);
-  if (res != FR_OK)
-  {
-    PLAYER_buf_len[PLAYER_nxtbuf_idx] = 0; /* Signal error to completion callback */
-    return;
-  }
-
-  PLAYER_buf_len[PLAYER_nxtbuf_idx] = (uint16_t)rxBytes >> 1;
+  unsigned rxSamples = SpiritMP3Decode(
+      &PLAYER_mp3Decoder,
+      PLAYER_buf[PLAYER_nxtbuf_idx],
+      PLAYER_BUF_SIZE_IN_SAMPLES,
+      NULL
+  );
+  PLAYER_buf_len[PLAYER_nxtbuf_idx] = (uint16_t)(rxSamples * PLAYER_BUF_CHANNELS);
 }
 
 /*
@@ -103,7 +125,11 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
     return;
   }
 
-  HAL_StatusTypeDef st = HAL_I2S_Transmit_DMA(PLAYER_hi2s, PLAYER_buf[PLAYER_nxtbuf_idx], PLAYER_buf_len[PLAYER_nxtbuf_idx]);
+  HAL_StatusTypeDef st = HAL_I2S_Transmit_DMA(
+    PLAYER_hi2s,
+    (uint16_t *)PLAYER_buf[PLAYER_nxtbuf_idx],
+    PLAYER_buf_len[PLAYER_nxtbuf_idx]
+  );
   if (st != HAL_OK)
     Error_Handler();
 
