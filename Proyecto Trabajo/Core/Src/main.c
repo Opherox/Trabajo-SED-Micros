@@ -252,6 +252,7 @@ int main(void)
           Error_Handler();
       }
     }
+    changeVolume(&hadc1, &hi2c1);
   }
   /* USER CODE END 3 */
 }
