@@ -125,15 +125,15 @@ void usbMediaConnectedCallback(void)
   {
     appState = APPST_PAUSED;
     HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-    /* TODO: print status changed message to OLED */
-    displayAppState(appState);
+    /* TODO: Hecho: print status changed message to OLED */
+    changeAppState(appState);
   }
   else
   {
     appState = APPST_NOMEDIA;
     HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
-    /* TODO: print status changed message to OLED */
-    displayAppState(appState);
+    /* TODO: Hecho: print status changed message to OLED */
+    changeAppState(appState);
   }
 }
 
@@ -147,8 +147,8 @@ void usbMediaDisconnectedCallback(void)
   FS_unmount();
   HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
-  /* TODO: print status changed message to OLED */
-  displayAppState(appState);
+  /* TODO: Hecho: print status changed message to OLED */
+  changeAppState(appState);
 }
 
 /*
@@ -256,6 +256,7 @@ int main(void)
       }
     }
     volume = changeVolume(&hadc1, &hi2c1);
+    LCDUpdate();
   }
   /* USER CODE END 3 */
 }
