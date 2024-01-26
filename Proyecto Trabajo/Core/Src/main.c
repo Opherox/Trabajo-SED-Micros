@@ -175,6 +175,7 @@ void APP_launchNextMP3(bool restart)
 
   /* TODO: print song info to OLED */
   PLAYER_play(info->fname);
+  changeSong(info->fname);
 }
 /* USER CODE END 0 */
 
