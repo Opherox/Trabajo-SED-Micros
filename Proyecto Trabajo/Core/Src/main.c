@@ -126,12 +126,14 @@ void usbMediaConnectedCallback(void)
     appState = APPST_PAUSED;
     HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
     /* TODO: print status changed message to OLED */
+    displayAppState(appState);
   }
   else
   {
     appState = APPST_NOMEDIA;
     HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
     /* TODO: print status changed message to OLED */
+    displayAppState(appState);
   }
 }
 
@@ -146,6 +148,7 @@ void usbMediaDisconnectedCallback(void)
   HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
   /* TODO: print status changed message to OLED */
+  displayAppState(appState);
 }
 
 /*
@@ -252,7 +255,7 @@ int main(void)
           Error_Handler();
       }
     }
-    changeVolume(&hadc1, &hi2c1);
+    volume = changeVolume(&hadc1, &hi2c1);
   }
   /* USER CODE END 3 */
 }
