@@ -22,6 +22,7 @@ uint16_t rectangle_width = 118;
 uint16_t rectangle_height = 10;
 
 char *songPlaying = NULL;
+uint32_t fileSize = 0;
 
 void oled_Init()
 {
@@ -49,9 +50,10 @@ void changeAppState(int state)
 	AppState = state;
 }
 
-void changeSong(char * song)
+void changeSongInfo(FILINFO file)
 {
-	strcpy(songPlaying, song);
+	strcpy(songPlaying, file.fname);
+	fileSize = file.fsize;
 }
 void LCDUpdate(void)
 {
@@ -82,5 +84,15 @@ void LCDUpdate(void)
 	{
 		SSD1306_Puts("No song", &Font_7x10, 1);
 	}
+	SSD1306_GotoXY(5,45);
+	if(fileSize != 0)
+	{
+		SSD1306_Puts((char*)fileSize, &Font_7x10, 1);
+	}
+	else
+	{
+
+	}
+
 	SSD1306_UpdateScreen();
 }

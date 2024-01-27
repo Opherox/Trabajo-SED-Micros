@@ -174,7 +174,7 @@ void APP_launchNextMP3(bool restart)
 
   /* TODO: print song info to OLED, añadir aparte del nombre los segundos o algo asi */
   PLAYER_play(info->fname);
-  changeSong(info->fname);
+  changeSongInfo(info);
 }
 /* USER CODE END 0 */
 
@@ -258,6 +258,7 @@ int main(void)
     		}
     	}
     	volume = changeVolume(&hadc1, &hi2c1);
+    	PLAYER_setVolume(volume);
     	LCDUpdate();
     }
   }
