@@ -127,14 +127,12 @@ void usbMediaConnectedCallback(void)
   {
     appState = APPST_PAUSED;
     HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-    /* TODO: Hecho: print status changed message to OLED */
     changeAppState(appState);
   }
   else
   {
     appState = APPST_NOMEDIA;
     HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
-    /* TODO: Hecho: print status changed message to OLED */
     changeAppState(appState);
   }
 }
@@ -149,7 +147,6 @@ void usbMediaDisconnectedCallback(void)
   FS_unmount();
   HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
-  /* TODO: Hecho: print status changed message to OLED */
   changeAppState(appState);
 }
 
@@ -175,7 +172,7 @@ void APP_launchNextMP3(bool restart)
     return;
   }
 
-  /* TODO: print song info to OLED */
+  /* TODO: print song info to OLED, añadir aparte del nombre los segundos o algo asi */
   PLAYER_play(info->fname);
   changeSong(info->fname);
 }
