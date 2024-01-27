@@ -42,7 +42,7 @@ const FILINFO *FS_nextMP3(bool reset)
 
     char *ext = strrchr(FS_info.fname, '.');
     if (ext)
-      noMatch = strcmp(ext + 1, "mp3");
+      noMatch = strcmp(ext + 1, "MP3");
   }
 
   if (FS_status != FR_OK)
