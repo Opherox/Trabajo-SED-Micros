@@ -17,9 +17,9 @@ uint16_t value;
 uint16_t volume;
 const uint16_t adcval_MAX = 4095;
 uint16_t rectangle_x = 5;
-uint16_t rectangle_y = 20;
+uint16_t rectangle_y = 10;
 uint16_t rectangle_width = 118;
-uint16_t rectangle_height = 20;
+uint16_t rectangle_height = 10;
 
 char *songPlaying = NULL;
 
@@ -53,27 +53,34 @@ void changeSong(char * song)
 {
 	strcpy(songPlaying, song);
 }
-void LCDUpdate()
+void LCDUpdate(void)
 {
 	SSD1306_Fill(SSD1306_COLOR_BLACK);
-		SSD1306_GotoXY(5, 0);
-		SSD1306_Puts("Volumen", &Font_11x18, 1);
-		SSD1306_GotoXY(5,45);
-		switch(AppState)
-			{
-			case 0:
-				SSD1306_Puts("No Media", &Font_11x18, 1);
-				break;
-			case 1:
-				SSD1306_Puts("Paused", &Font_11x18, 1);
-				break;
-				SSD1306_Puts("Playing", &Font_11x18, 1);
-			case 2:
-				break;
-			}
-		SSD1306_GotoXY(5,45);
-		SSD1306_Puts(songPlaying, &Font_11x18, 1);
-		SSD1306_DrawRectangle(rectangle_x, rectangle_y, rectangle_width, rectangle_height, 1);
-		SSD1306_DrawFilledRectangle(rectangle_x, rectangle_y, value, rectangle_height, 1);
-		SSD1306_UpdateScreen();
+	SSD1306_GotoXY(5, 0);
+	SSD1306_Puts("Volumen", &Font_7x10, 1);
+	SSD1306_DrawRectangle(rectangle_x, rectangle_y, rectangle_width, rectangle_height, 1);
+	SSD1306_DrawFilledRectangle(rectangle_x, rectangle_y, value, rectangle_height, 1);
+	SSD1306_GotoXY(5,25);
+	switch(AppState)
+	{
+		case 0:
+			SSD1306_Puts("No Media", &Font_7x10, 1);
+			break;
+		case 1:
+			SSD1306_Puts("Paused", &Font_7x10, 1);
+			break;
+		case 2:
+			SSD1306_Puts("Playing:", &Font_7x10, 1);
+			break;
+	}
+	SSD1306_GotoXY(5,35);
+	if(songPlaying != NULL)
+	{
+		SSD1306_Puts(songPlaying, &Font_7x10, 1);
+	}
+	else
+	{
+		SSD1306_Puts("No song", &Font_7x10, 1);
+	}
+	SSD1306_UpdateScreen();
 }

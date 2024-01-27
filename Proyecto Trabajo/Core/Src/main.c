@@ -80,6 +80,8 @@ static AppState appState;
 
 static uint16_t volume;
 static ButtonState buttonState = BSP;
+
+extern USBH_HandleTypeDef hUsbHostFS;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -235,29 +237,32 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-    if (usrBtnPressed)
+    if(hUsbHostFS.gState == HOST_CLASS)
     {
-      usrBtnPressed = false;
+    	if (usrBtnPressed)
+    	{
+    		usrBtnPressed = false;
 
-      switch (appState)
-      {
-        case APPST_NOMEDIA:
-          break;
+    		switch (appState)
+    		{
+    		case APPST_NOMEDIA:
+    			break;
 
-        case APPST_PAUSED:
-          APP_launchNextMP3(true);
-          break;
+    		case APPST_PAUSED:
+    			APP_launchNextMP3(true);
+    			break;
 
-        case APPST_PLAYING:
-          APP_launchNextMP3(false);
-          break;
+    		case APPST_PLAYING:
+    			APP_launchNextMP3(false);
+    			break;
 
-        default:
-          Error_Handler();
-      }
+    		default:
+    			Error_Handler();
+    		}
+    	}
+    	volume = changeVolume(&hadc1, &hi2c1);
+    	LCDUpdate();
     }
-    volume = changeVolume(&hadc1, &hi2c1);
-    LCDUpdate();
   }
   /* USER CODE END 3 */
 }
