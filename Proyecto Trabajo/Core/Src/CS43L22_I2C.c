@@ -19,8 +19,7 @@ void CS43L22_Init(I2C_HandleTypeDef *i2c)
 {
 
 	CS43L22_hi2c = i2c;
-	//__HAL_UNLOCK(&hi2s3);
-	//__HAL_I2S_ENABLE(&hi2s3);
+
 	//POWER CONTROL 1
 			  estado[0]=0x02;
 			  estado[1]=0x01; //Power down 0x01 / 0x9E para encender
@@ -106,3 +105,18 @@ void CS43L22_OFF(){
 				  estado[1]=0x01;
 				  HAL_I2C_Master_Transmit(CS43L22_hi2c, audio_addr_write, estado, 2, HAL_MAX_DELAY);
 }
+
+void CS43L22_Volume(uint16_t volumen){
+
+	int i=(int)(volumen/(100/25)); //Hay 25 registros y la señal analogica varia entre 0-100
+	estado[1]=registros_volumen[i];
+
+	if(volumen==100)estado[1]=registros_volumen[24];
+
+	estado[0]=0x20; // Master Volume Control A
+	HAL_I2C_Master_Transmit(CS43L22_hi2c, audio_addr_write, estado, 2, HAL_MAX_DELAY);
+
+	estado[0]=0x21; // Master Volume Control B
+	HAL_I2C_Master_Transmit(CS43L22_hi2c, audio_addr_write, estado, 2, HAL_MAX_DELAY);
+}
+
