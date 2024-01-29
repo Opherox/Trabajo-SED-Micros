@@ -78,9 +78,9 @@ void PLAYER_stop()
   CS43L22_OFF();
 }
 
-void PLAYER_setVolume(unsigned vol)
+void PLAYER_setVolume(uint16_t vol)
 {
-  /* TODO: codificar función */
+	CS43L22_Volume(vol);
 }
 
 /*

@@ -17,6 +17,6 @@ void PLAYER_init(I2C_HandleTypeDef *hi2c1, I2S_HandleTypeDef *hi2s3);
 bool PLAYER_isPlaying(void);
 bool PLAYER_play(const char *songFPath);
 void PLAYER_stop(void);
-void PLAYER_setVolume(unsigned vol);
+void PLAYER_setVolume(uint16_t vol);
 
 #endif /* INC_PLAYER_H_ */
