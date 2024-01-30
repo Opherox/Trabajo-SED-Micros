@@ -97,7 +97,7 @@ unsigned int MP3ReadCallback(void *pMP3CompressedData, unsigned int nMP3DataSize
 /*
  *  Refill next buffer before current run out of data
  */
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+/*void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
   if (hi2s != PLAYER_hi2s)
     Error_Handler();
@@ -109,17 +109,18 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
       NULL
   );
   PLAYER_buf_len[PLAYER_nxtbuf_idx] = (uint16_t)(rxSamples * PLAYER_BUF_CHANNELS);
-}
+}*
 
 /*
  *  Change to next buffer & schedule transfer to CODEC
  */
+/*
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
   if (hi2s != PLAYER_hi2s)
     Error_Handler();
 
-  if (PLAYER_buf_len[PLAYER_nxtbuf_idx] == 0) /* Error or no more data */
+  if (PLAYER_buf_len[PLAYER_nxtbuf_idx] == 0)
   {
     PLAYER_stop();
     return;
@@ -133,5 +134,6 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
   if (st != HAL_OK)
     Error_Handler();
 
-  PLAYER_nxtbuf_idx = 1 - PLAYER_nxtbuf_idx;  /* Update next buffer index */
+  PLAYER_nxtbuf_idx = 1 - PLAYER_nxtbuf_idx;
 }
+*/

@@ -24,9 +24,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <FileSystem.h>
-#include <player.h>
+//#include <player.h>
 #include <volume.h>
-
+#include <WavPlayer.h>
 #include "stdbool.h"
 /* USER CODE END Includes */
 
@@ -82,6 +82,9 @@ static uint16_t volume;
 static ButtonState buttonState = BSP;
 
 extern USBH_HandleTypeDef hUsbHostFS;
+
+WavHeader header;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -173,7 +176,9 @@ void APP_launchNextMP3(bool restart)
   }
 
   /* TODO: print song info to OLED, añadir aparte del nombre los segundos o algo asi */
-  PLAYER_play(info->fname);
+  ReadWavHeader(info->fname, &header);
+  WavAllocateMemory();
+  WavPLAYER_play(info->fname);
   changeSongInfo(info);
 }
 /* USER CODE END 0 */
@@ -222,7 +227,7 @@ int main(void)
   MX_ADC1_Init();
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
-  PLAYER_init(&hi2c1, &hi2s3);
+  WavPLAYER_init(&hi2c1, &hi2s3);
   oled_Init();
   /* USER CODE END 2 */
 
@@ -258,7 +263,7 @@ int main(void)
     		}
     	}
     	volume = changeVolume(&hadc1, &hi2c1);
-    	PLAYER_setVolume(volume);
+    	WavPLAYER_setVolume(volume);
     	LCDUpdate();
     }
   }

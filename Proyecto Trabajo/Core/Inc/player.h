@@ -20,3 +20,4 @@ void PLAYER_stop(void);
 void PLAYER_setVolume(uint16_t vol);
 
 #endif /* INC_PLAYER_H_ */
+

@@ -10,6 +10,7 @@
 #include "ssd1306.h"
 #include "fonts.h"
 #include "FileSystem.h"
+#include <locale.h>
 
 int AppState;
 
@@ -87,7 +88,10 @@ void LCDUpdate(void)
 	SSD1306_GotoXY(5,45);
 	if(fileSize != 0)
 	{
-		SSD1306_Puts((char*)fileSize, &Font_7x10, 1);
+		char numberString[20];
+		float mbSize = fileSize/(1024 * 1024);
+		sprintf(numberString, "%.2f Mb", mbSize); //TODO: Revisar xq da numeros gigantes, xq ns si es q no pilla bien el fichero o q
+		SSD1306_Puts(numberString, &Font_7x10, 1);
 	}
 	else
 	{
