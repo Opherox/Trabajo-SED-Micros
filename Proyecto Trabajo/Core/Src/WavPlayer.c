@@ -91,9 +91,6 @@ unsigned int WavReadCallback(void *PCMBuffer, unsigned int bufferSize, void *tok
 
 bool WavPLAYER_play(const char *songFPath)
 {
-	while(1)
-	{
-
     WavPLAYER_stop(); // Preventive play termination
 
     FRESULT res = f_open(&PLAYER_songFile, songFPath, FA_READ);
@@ -114,7 +111,6 @@ bool WavPLAYER_play(const char *songFPath)
     // Assuming 16-bit stereo data, adjust accordingly
     HAL_I2S_TxHalfCpltCallback(PLAYER_hi2s);
     HAL_I2S_TxCpltCallback(PLAYER_hi2s);
-	}
     return true;
 }
 
