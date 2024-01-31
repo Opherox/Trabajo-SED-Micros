@@ -180,6 +180,7 @@ void APP_launchNextMP3(bool restart)
   WavAllocateMemory();
   WavPLAYER_play(info->fname);
   changeSongInfo(info);
+  appState = APPST_PLAYING;
 }
 /* USER CODE END 0 */
 

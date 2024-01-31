@@ -22,7 +22,7 @@ uint16_t rectangle_y = 10;
 uint16_t rectangle_width = 118;
 uint16_t rectangle_height = 10;
 
-char *songPlaying = NULL;
+char songPlaying[15] = "";
 uint32_t fileSize = 0;
 
 void oled_Init()
@@ -51,10 +51,10 @@ void changeAppState(int state)
 	AppState = state;
 }
 
-void changeSongInfo(FILINFO file)
+void changeSongInfo(FILINFO *file)
 {
-	strcpy(songPlaying, file.fname);
-	fileSize = file.fsize;
+	strcpy(songPlaying, file->fname);
+	fileSize = file->fsize;
 }
 void LCDUpdate(void)
 {

@@ -14,7 +14,10 @@ static I2S_HandleTypeDef *PLAYER_hi2s;
 
 static uint16_t *wavBuffer[2];
 
-static int PLAYER_nxtbuf_idx;
+static int buffPlaying = 1;
+static int buffReading = 0;
+
+static int hasRead = 0;
 
 static bool PLAYER_playing = false;
 
@@ -28,10 +31,14 @@ extern WavHeader header;
 
 static uint16_t PLAYER_buf_len[2];
 
+static int transfered = 0;
+
 void WavPLAYER_init(I2C_HandleTypeDef *hi2c, I2S_HandleTypeDef *hi2s)
 {
   PLAYER_hi2s = hi2s;
-  PLAYER_nxtbuf_idx = 0;
+  buffReading = 0;
+  buffPlaying = 1;
+  hasRead = 0;
 
   CS43L22_Init(hi2c);
 }
@@ -54,8 +61,7 @@ FRESULT ReadWavHeader(const char* filePath, WavHeader* header)
     }
     // Read the WAV header
     result = f_read(&file, header, sizeof(WavHeader), NULL);
-    // Close the file
-    f_close(&file);
+
     return result;
 }
 
@@ -78,14 +84,14 @@ int WavAllocateMemory()
 	return 1;
 }
 
-unsigned int WavReadCallback(void *PCMBuffer, unsigned int bufferSize, void *token)
+unsigned int WavRead(void *PCMBuffer, unsigned int bufferSize)
 {
     UINT rxBytes;
-    FRESULT res = f_read((FIL *)token, PCMBuffer, bufferSize, &rxBytes);
+    FRESULT res = f_read(&PLAYER_songFile, PCMBuffer, bufferSize, &rxBytes);
     BytesRead += rxBytes;
     // Assuming 16-bit stereo data, adjust accordingly
     unsigned int samplesRead = rxBytes / sizeof(short) / 2;
-
+    hasRead = 1;
     return res == FR_OK ? samplesRead : 0;
 }
 
@@ -104,13 +110,21 @@ bool WavPLAYER_play(const char *songFPath)
     CS43L22_ON();
 
     PLAYER_playing = true;
-    PLAYER_nxtbuf_idx = 0;
-
-    WavReadCallback(wavBuffer[PLAYER_nxtbuf_idx], header.subchunk2Size, &PLAYER_songFile);
-
+    if(transfered == 1)
+       {
+       	if(buffReading == 0)  	{buffReading = 1;}
+       	else	{buffReading = 0;}
+       	if(buffPlaying == 0) 	{buffPlaying = 1;}
+       	else	{buffPlaying = 0;}
+       	transfered = 0;
+       }
+    if(hasRead == 0)
+    {
+    WavRead(wavBuffer[buffReading], header.subchunk2Size); //si no ha leido que lea
+    }
+    TransmitAudio(wavBuffer[buffPlaying]); //transmitir el otro buffer
     // Assuming 16-bit stereo data, adjust accordingly
-    HAL_I2S_TxHalfCpltCallback(PLAYER_hi2s);
-    HAL_I2S_TxCpltCallback(PLAYER_hi2s);
+
     return true;
 }
 
@@ -130,35 +144,16 @@ void WavPLAYER_setVolume(uint16_t vol)
 	CS43L22_Volume(vol);
 }
 
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+void TransmitAudio(uint16_t buff)
 {
-  if (hi2s != PLAYER_hi2s)
-    Error_Handler();
-
-  PLAYER_buf_len[PLAYER_nxtbuf_idx] = (uint16_t)(header.subchunk2Size * PLAYER_BUF_CHANNELS);
+    HAL_I2S_Transmit_DMA(PLAYER_hi2s, (uint16_t *)buff, (uint16_t)sizeof(buff));
 }
 
-/*
- *  Change to next buffer & schedule transfer to CODEC
- */
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  if (hi2s != PLAYER_hi2s)
-    Error_Handler();
-
-  if (PLAYER_buf_len[PLAYER_nxtbuf_idx] == 0) /* Error or no more data */
-  {
-    PLAYER_stop();
-    return;
-  }
-
-  HAL_StatusTypeDef st = HAL_I2S_Transmit_DMA(
-    PLAYER_hi2s,
-    (uint16_t *)wavBuffer[PLAYER_nxtbuf_idx],
-    PLAYER_buf_len[PLAYER_nxtbuf_idx]
-  );
-  if (st != HAL_OK)
-    Error_Handler();
-
-  PLAYER_nxtbuf_idx = 1 - PLAYER_nxtbuf_idx;  /* Update next buffer index */
+	if (hi2s == PLAYER_hi2s)
+	{
+	transfered = 1;
+	hasRead = 0;	//cuando acaba de transmitir que lea y que avise a la otra funcion
+	}
 }
