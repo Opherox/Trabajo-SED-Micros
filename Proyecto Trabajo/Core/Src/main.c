@@ -177,8 +177,7 @@ void APP_launchNextMP3(bool restart)
 
   /* TODO: print song info to OLED, añadir aparte del nombre los segundos o algo asi */
   ReadWavHeader(info->fname, &header);
-  WavAllocateMemory();
-  WavPLAYER_play(info->fname);
+  //WavAllocateMemory();
   changeSongInfo(info);
   appState = APPST_PLAYING;
 }
@@ -245,7 +244,7 @@ int main(void)
     	if (usrBtnPressed)
     	{
     		usrBtnPressed = false;
-
+    		WavPlayerStop();
     		switch (appState)
     		{
     		case APPST_NOMEDIA:
@@ -262,6 +261,10 @@ int main(void)
     		default:
     			Error_Handler();
     		}
+    	}
+    	if(appState == APPST_PLAYING)
+    	{
+    	WavPlayerPlay();
     	}
     	volume = changeVolume(&hadc1, &hi2c1);
     	WavPLAYER_setVolume(volume);

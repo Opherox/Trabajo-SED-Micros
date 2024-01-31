@@ -9,10 +9,10 @@
 #include <CS43L22_I2C.h>
 
 #define PLAYER_BUF_CHANNELS         (2)
-
+#define Buffer_Size 1024
 static I2S_HandleTypeDef *PLAYER_hi2s;
 
-static uint16_t *wavBuffer[2];
+static uint16_t wavBuffer[2][Buffer_Size];
 
 static int buffPlaying = 1;
 static int buffReading = 0;
@@ -25,13 +25,13 @@ static FIL PLAYER_songFile;
 
 static int memoryAllocated = 0;
 
-static unsigned int BytesRead = 0;
+static uint32_t BytesRead = 0;
 
 extern WavHeader header;
 
-static uint16_t PLAYER_buf_len[2];
+static int hasTransfered = 0;
 
-static int transfered = 0;
+extern char songPlaying[15];
 
 void WavPLAYER_init(I2C_HandleTypeDef *hi2c, I2S_HandleTypeDef *hi2s)
 {
@@ -39,6 +39,7 @@ void WavPLAYER_init(I2C_HandleTypeDef *hi2c, I2S_HandleTypeDef *hi2s)
   buffReading = 0;
   buffPlaying = 1;
   hasRead = 0;
+  hasTransfered = 0;
 
   CS43L22_Init(hi2c);
 }
@@ -48,29 +49,32 @@ bool WavPLAYER_isPlaying()
   return PLAYER_playing;
 }
 
-FRESULT ReadWavHeader(const char* filePath, WavHeader* header)
+FRESULT ReadWavHeader(const char* filename, WavHeader* header)
 {
-    FIL file;
+    FIL songFile;
     FRESULT result;
     // Open the file
-    result = f_open(&file, filePath, FA_READ);
+    result = f_open(&songFile, filename, FA_READ);
     if (result != FR_OK)
     {
         //error
         return result;
     }
     // Read the WAV header
-    result = f_read(&file, header, sizeof(WavHeader), NULL);
-
+    UINT realBytesRead = 0;
+    result = f_read(&songFile, header, sizeof(WavHeader), &realBytesRead);
+    BytesRead += realBytesRead;
+    f_close(&songFile);  // Cerramos el archivo después de leerlo
+    // Assuming 16-bit stereo data, adjust accordingly
     return result;
 }
 
-int WavAllocateMemory()
+/*int WavAllocateMemory()
 {
 	memoryAllocated = 1;
 	for(int i=0; i<2;i++)
 	{
-		wavBuffer[i] = (uint16_t*)malloc(header.subchunk2Size);
+		wavBuffer[i] = (uint16_t*)malloc(header.subchunk2Size*header.bitsPerSample);
 		if(wavBuffer[i] == NULL)
 		{
 			for(int j=0; j<2;j++)
@@ -82,53 +86,74 @@ int WavAllocateMemory()
 		}
 	}
 	return 1;
+}*/
+
+int WavRead(const char filename[], uint16_t buffer[], uint32_t *bytesRead)
+{
+	if(filename != NULL)
+		{
+			FRESULT result;
+			FIL songFile;
+			result = f_open(&songFile, filename, FA_READ); //abrimos el archivo en lectura
+			UINT realBytesRead = 0;
+			UINT elementsToRead = sizeof(uint16_t) * Buffer_Size;
+			if(result != FR_OK)
+			{
+				printf("Error al abrir el archivo");
+				return 1;
+			}
+			f_lseek(&songFile, *bytesRead); //nos ponemos al principio del archivo + los bytes leidos anteriormente
+			if((result = f_read(&songFile, buffer, elementsToRead, &realBytesRead)) == FR_OK) //si la lectura se ha podido realizar
+			{
+				printf("Lectura de fichero realizada con exito");
+				f_close(&songFile);  // Cerramos el archivo después de leerlo
+				*bytesRead += realBytesRead; //los bytes leidos son los que ya se habian leido mas los que se ha conseguido leer en esta ocasion
+				hasRead = 1;
+				return 1;
+			}
+			else
+			{
+				printf("Error al leer el archivo");
+				f_close(&songFile);  // Cerramos el archivo en caso de error
+				return 0;
+			}
+		}
 }
 
-unsigned int WavRead(void *PCMBuffer, unsigned int bufferSize)
+bool WavPlayerPlay()
 {
-    UINT rxBytes;
-    FRESULT res = f_read(&PLAYER_songFile, PCMBuffer, bufferSize, &rxBytes);
-    BytesRead += rxBytes;
-    // Assuming 16-bit stereo data, adjust accordingly
-    unsigned int samplesRead = rxBytes / sizeof(short) / 2;
-    hasRead = 1;
-    return res == FR_OK ? samplesRead : 0;
-}
-
-bool WavPLAYER_play(const char *songFPath)
-{
-    WavPLAYER_stop(); // Preventive play termination
-
-    FRESULT res = f_open(&PLAYER_songFile, songFPath, FA_READ);
-    if (res != FR_OK)
-    {
-        // Handle file open error (e.g., log or return false)
-        return false;
-    }
-
-    // Assuming 16-bit stereo data, adjust accordingly
-    CS43L22_ON();
-
-    PLAYER_playing = true;
-    if(transfered == 1)
-       {
-       	if(buffReading == 0)  	{buffReading = 1;}
-       	else	{buffReading = 0;}
-       	if(buffPlaying == 0) 	{buffPlaying = 1;}
-       	else	{buffPlaying = 0;}
-       	transfered = 0;
-       }
-    if(hasRead == 0)
-    {
-    WavRead(wavBuffer[buffReading], header.subchunk2Size); //si no ha leido que lea
-    }
-    TransmitAudio(wavBuffer[buffPlaying]); //transmitir el otro buffer
-    // Assuming 16-bit stereo data, adjust accordingly
-
+	CS43L22_ON();
+	if(songPlaying != NULL)
+	{
+		   PLAYER_playing = true;
+		    if(hasTransfered == 1 && hasRead == 1)
+		       {
+		       	if(buffReading == 0 && buffPlaying == 1)
+		       	{
+		       		buffReading = 1;
+		       		buffPlaying = 0;
+		       	}
+		       	else if(buffReading == 1 && buffPlaying == 0)
+		       	{
+		       		buffReading = 0;
+		       		buffPlaying = 1;
+		       	}
+		       	hasTransfered = 0;
+		       	hasRead = 0;
+		       }
+		    if(hasRead == 0)
+		    {
+		    	while(!hasRead)
+		    	{
+		    		WavRead(songPlaying, wavBuffer[buffReading], &BytesRead); //si no ha leido que lea
+		    	}
+		    	TransmitAudio(wavBuffer[buffPlaying]); //transmitir el otro buffer
+		    }
+	}
     return true;
 }
 
-void WavPLAYER_stop()
+void WavPlayerStop()
 {
     if (PLAYER_playing)
     {
@@ -144,16 +169,15 @@ void WavPLAYER_setVolume(uint16_t vol)
 	CS43L22_Volume(vol);
 }
 
-void TransmitAudio(uint16_t buff)
+void TransmitAudio(uint16_t buff[])
 {
-    HAL_I2S_Transmit_DMA(PLAYER_hi2s, (uint16_t *)buff, (uint16_t)sizeof(buff));
+    HAL_I2S_Transmit_DMA(PLAYER_hi2s, buff, Buffer_Size);
 }
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
 	if (hi2s == PLAYER_hi2s)
 	{
-	transfered = 1;
-	hasRead = 0;	//cuando acaba de transmitir que lea y que avise a la otra funcion
+	hasTransfered = 1;
 	}
 }

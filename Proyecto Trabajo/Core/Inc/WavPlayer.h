@@ -33,9 +33,9 @@ void WavPLAYER_init(I2C_HandleTypeDef *hi2c, I2S_HandleTypeDef *hi2s);
 bool WavPLAYER_isPlaying();
 FRESULT ReadWavHeader(const char* filePath, WavHeader* header);
 int WavAllocateMemory();
-unsigned int WavReadCallback(void *PCMBuffer, unsigned int bufferSize, void *token);
-bool WavPLAYER_play(const char *songFPath);
-void WavPLAYER_stop();
+int WavRead(const char filename[], uint16_t buffer[], uint32_t *bytesRead);
+bool WavPlaterStop();
 void WavPLAYER_setVolume(uint16_t vol);
+void TransmitAudio(uint16_t buff[]);
 
 #endif /* INC_WAVPLAYER_H_ */
