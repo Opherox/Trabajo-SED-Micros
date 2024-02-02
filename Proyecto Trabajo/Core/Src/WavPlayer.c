@@ -9,7 +9,7 @@
 #include <CS43L22_I2C.h>
 
 #define PLAYER_BUF_CHANNELS         (2)
-#define Buffer_Size 1024
+#define Buffer_Size 20480
 static I2S_HandleTypeDef *PLAYER_hi2s;
 
 static uint16_t wavBuffer[2][Buffer_Size];
