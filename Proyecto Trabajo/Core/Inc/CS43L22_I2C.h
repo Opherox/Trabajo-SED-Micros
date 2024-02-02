@@ -10,6 +10,20 @@
 
 #include "stm32f4xx_hal.h"
 
+#define POWER_CONTROL1				0x02
+#define POWER_CONTROL2				0x04
+#define CLOCKING_CONTROL 	  		0x05
+#define INTERFACE_CONTROL1			0x06
+#define INTERFACE_CONTROL2			0x07
+#define PASSTHROUGH_A				0x08
+#define PASSTHROUGH_B				0x09
+#define MISCELLANEOUS_CONTRLS		0x0E
+#define PLAYBACK_CONTROL			0x0F
+#define PASSTHROUGH_VOLUME_A		0x14
+#define PASSTHROUGH_VOLUME_B		0x15
+#define PCM_VOLUME_A				0x1A
+#define PCM_VOLUME_B				0x1B
+
 static uint8_t registros_volumen[]={
 		0x00, //0db
 		0x01, //0.5db
