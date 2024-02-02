@@ -9,7 +9,7 @@
 #include <CS43L22_I2C.h>
 
 #define PLAYER_BUF_CHANNELS         (2)
-#define Buffer_Size 20480
+#define Buffer_Size 1024*20
 static I2S_HandleTypeDef *PLAYER_hi2s;
 
 static uint16_t wavBuffer[2][Buffer_Size];
@@ -66,6 +66,7 @@ FRESULT ReadWavHeader(const char* filename, WavHeader* header)
     BytesRead += realBytesRead;
     f_close(&songFile);  // Cerramos el archivo después de leerlo
     // Assuming 16-bit stereo data, adjust accordingly
+    CS43L22_ON();
     return result;
 }
 
@@ -96,7 +97,7 @@ int WavRead(const char filename[], uint16_t buffer[], uint32_t *bytesRead)
 			FIL songFile;
 			result = f_open(&songFile, filename, FA_READ); //abrimos el archivo en lectura
 			UINT realBytesRead = 0;
-			UINT elementsToRead = sizeof(uint16_t) * Buffer_Size;
+			UINT elementsToRead = (sizeof(uint16_t) * Buffer_Size);
 			if(result != FR_OK)
 			{
 				printf("Error al abrir el archivo");
@@ -122,31 +123,16 @@ int WavRead(const char filename[], uint16_t buffer[], uint32_t *bytesRead)
 
 bool WavPlayerPlay()
 {
-	CS43L22_ON();
+
 	if(songPlaying != NULL)
 	{
 		   PLAYER_playing = true;
-		    if(hasTransfered == 1 && hasRead == 1)
-		       {
-		       	if(buffReading == 0 && buffPlaying == 1)
-		       	{
-		       		buffReading = 1;
-		       		buffPlaying = 0;
-		       	}
-		       	else if(buffReading == 1 && buffPlaying == 0)
-		       	{
-		       		buffReading = 0;
-		       		buffPlaying = 1;
-		       	}
-		       	hasTransfered = 0;
-		       	hasRead = 0;
-		       }
 		    if(hasRead == 0)
 		    {
-		    	while(!hasRead)
-		    	{
-		    		WavRead(songPlaying, wavBuffer[buffReading], &BytesRead); //si no ha leido que lea
-		    	}
+		    	WavRead(songPlaying, wavBuffer[buffReading], &BytesRead); //si no ha leido que lea
+		    }
+		    if(hasTransfered == 0)
+		    {
 		    	TransmitAudio(wavBuffer[buffPlaying]); //transmitir el otro buffer
 		    }
 	}
@@ -174,10 +160,28 @@ void TransmitAudio(uint16_t buff[])
     HAL_I2S_Transmit_DMA(PLAYER_hi2s, buff, Buffer_Size);
 }
 
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+	if (hi2s == PLAYER_hi2s)
+	{
+		hasRead = 0;
+	}
+}
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
 	if (hi2s == PLAYER_hi2s)
 	{
-	hasTransfered = 1;
+		if(buffReading == 0 && buffPlaying == 1)
+		{
+			buffReading = 1;
+			buffPlaying = 0;
+		}
+		else if(buffReading == 1 && buffPlaying == 0)
+		{
+			buffReading = 0;
+			buffPlaying = 1;
+		}
+	//hasTransfered = 0;
+	//hasTransfered = 1;
 	}
 }
